@@ -16,7 +16,11 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 app.use(cors({
-    origin: ["http://localhost:5173", "http://localhost:3000"],
+    origin: [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://chat-eosin-seven.vercel.app"   // ✅ your frontend domain
+  ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
