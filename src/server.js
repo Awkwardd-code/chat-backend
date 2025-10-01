@@ -15,16 +15,25 @@ import { apiLimiter } from "./middleware/rateLimiter.js";
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
+// CORS configuration
 app.use(cors({
     origin: [
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "https://chat-eosin-seven.vercel.app"   // ✅ your frontend domain
-  ],
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "https://chat-eosin-seven.vercel.app",
+      "https://chat-backend-alpha-tan.vercel.app"
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    exposedHeaders: ['Set-Cookie'],
 }));
+
+// Cookie parser configuration
+app.use(cookieParser());
+
+// Trust proxy for secure cookies in production
+app.set('trust proxy', 1);
 
 // Apply rate limiting to all API routes
 app.use("/api", apiLimiter);

@@ -17,13 +17,21 @@ export const generateToken = (userId, res) => {
     sameSite: "strict", // CSRF attacks
     secure: ENV.NODE_ENV === "development" ? false : true,
   }); */
-  res.cookie("jwt", token, {
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+  const cookieOptions = {
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     httpOnly: true,
     secure: true,
-    sameSite: "none",
-    domain: process.env.NODE_ENV === "production" ? ".vercel.app" : undefined,
-    path: "/"
+    sameSite: 'none',
+    path: '/',
+  };
+
+  // Set the cookie
+  res.cookie("jwt", token, cookieOptions);
+  
+  // For debugging
+  console.log('Cookie being set:', {
+    token: token.substring(0, 10) + '...',
+    options: cookieOptions
   });
 
 
