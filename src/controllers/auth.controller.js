@@ -61,34 +61,51 @@ export const signup = async (req, res) => {
 };
 
 export const login = async (req, res) => {
-  const { email, password } = req.body;
-  console.log("Login attempt:", email);
-
-  if (!email || !password) return res.status(400).json({ message: "Email and password are required" });
-
   try {
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "Invalid credentials" });
+    const { email, password } = req.body;
+    console.log("Login attempt:", email);
 
-    const isPasswordCorrect = await bcrypt.compare(password, user.password);
-    if (!isPasswordCorrect) return res.status(400).json({ message: "Invalid credentials" });
-
-    try {
-      generateToken(user._id, res);
-    } catch (jwtErr) {
-      console.error("JWT generation failed:", jwtErr.message);
-      return res.status(500).json({ message: "Server error generating token" });
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
     }
 
-    res.status(200).json({
+    const user = await User.findOne({ email }).select('+password');
+    if (!user) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    if (!isPasswordCorrect) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    const token = generateToken(user._id, res);
+    if (!token) {
+      throw new Error("Failed to generate authentication token");
+    }
+
+    // Remove sensitive data before sending response
+    const userResponse = {
       _id: user._id,
       fullName: user.fullName,
       email: user.email,
       profilePic: user.profilePic,
-    });
+    };
+
+    res.status(200).json(userResponse);
   } catch (err) {
-    console.error("Login controller error:", err.message);
-    res.status(500).json({ message: "Internal server error", error: err.message });
+    console.error("Login controller error:", {
+      message: err.message,
+      stack: err.stack,
+      email: req.body?.email
+    });
+    
+    // Send a safe error message in production
+    res.status(500).json({
+      message: process.env.NODE_ENV === 'production' 
+        ? "An error occurred during login" 
+        : err.message
+    });
   }
 };
 

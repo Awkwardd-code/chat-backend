@@ -32,10 +32,29 @@ app.use("/api", apiLimiter);
 app.use(express.json({ limit: "5mb" })); // req.body
 app.use(cookieParser());
 
-app.use("/api/auth",authRoutes);
-app.use("/api/messages",messageRoutes);
+// Basic security headers
+app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    next();
+});
+
+app.use("/api/auth", authRoutes);
+app.use("/api/messages", messageRoutes);
+
 app.get("/", (req, res) => {
     res.send("API is running...");
+});
+
+// Error handling - after all routes
+app.use((err, req, res, next) => {
+    console.error('Server Error:', err.stack);
+    res.status(500).json({ 
+        message: process.env.NODE_ENV === 'production' 
+            ? 'Internal Server Error' 
+            : err.message || 'Something went wrong!' 
+    });
 });
 
 app.listen(PORT, () => {
